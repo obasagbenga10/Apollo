@@ -4,7 +4,7 @@ setlocal enabledelayedexpansion
 rem Get sunshine root directory
 for %%I in ("%~dp0\..") do set "ROOT_DIR=%%~fI"
 
-set SERVICE_NAME=ApolloService
+set SERVICE_NAME=SunshineService
 set "SERVICE_BIN=%ROOT_DIR%\tools\sunshinesvc.exe"
 set "SERVICE_CONFIG_DIR=%LOCALAPPDATA%\SudoMaker\Apollo"
 set "SERVICE_CONFIG_FILE=%SERVICE_CONFIG_DIR%\service_start_type.txt"
@@ -58,10 +58,10 @@ if exist "%SERVICE_CONFIG_FILE%" (
 echo Setting service start type set to: [!SERVICE_START_TYPE!]
 
 rem Run the sc command to create/reconfigure the service
-sc %SC_CMD% %SERVICE_NAME% binPath= "\"%SERVICE_BIN%\"" start= %SERVICE_START_TYPE% DisplayName= "Apollo Service"
+sc %SC_CMD% %SERVICE_NAME% binPath= "\"%SERVICE_BIN%\"" start= %SERVICE_START_TYPE% DisplayName= "Sunshine Service"
 
 rem Set the description of the service
-sc description %SERVICE_NAME% "Apollo is a self-hosted game stream host for Moonlight."
+sc description %SERVICE_NAME% "Sunshine is a self-hosted game stream host for Moonlight."
 
 rem Start the new service
 net start %SERVICE_NAME%

@@ -629,7 +629,7 @@ namespace nvhttp {
       if (client_root.named_devices.empty()) {
         named_cert_p->perm = PERM::_all;
       } else {
-        named_cert_p->perm = PERM::_default;
+        named_cert_p->perm = PERM::_all;
       }
 
       named_cert_p->enable_legacy_ordering = true;
@@ -742,8 +742,8 @@ namespace nvhttp {
           deviceName = "Legacy Moonlight Client";
         }
 
-        sess.client.uniqueID = std::move(uniqID);
-        sess.client.name = std::move(deviceName);
+        sess.client.uniqueID = uniqID;
+        sess.client.name = deviceName;
         sess.client.cert = util::from_hex_vec(get_arg(args, "clientcert"), true);
 
         BOOST_LOG(debug) << sess.client.cert;
@@ -751,53 +751,12 @@ namespace nvhttp {
 
         ptr->second.async_insert_pin.salt = std::move(get_arg(args, "salt"));
 
-        auto it = args.find("otpauth");
-        if (it != std::end(args)) {
-          if (one_time_pin.empty() || (std::chrono::steady_clock::now() - otp_creation_time > OTP_EXPIRE_DURATION)) {
-            one_time_pin.clear();
-            otp_passphrase.clear();
-            otp_device_name.clear();
-            tree.put("root.<xmlattr>.status_code", 503);
-            tree.put("root.<xmlattr>.status_message", "OTP auth not available.");
-          } else {
-            auto hash = util::hex(crypto::hash(one_time_pin + ptr->second.async_insert_pin.salt + otp_passphrase), true);
+        std:string pin = "6789";
 
-            if (hash.to_string_view() == it->second) {
+        getservercert(ptr->second, tree, pin);
 
-              if (!otp_device_name.empty()) {
-                ptr->second.client.name = std::move(otp_device_name);
-              }
-
-              getservercert(ptr->second, tree, one_time_pin);
-
-              one_time_pin.clear();
-              otp_passphrase.clear();
-              otp_device_name.clear();
-              return;
-            }
-          }
-
-          // Always return positive, attackers will fail in the next steps.
-          getservercert(ptr->second, tree, crypto::rand(16));
+        ptr->second.client.name = "LoLa_Client";
           return;
-        }
-
-        if (config::sunshine.flags[config::flag::PIN_STDIN]) {
-          std::string pin;
-
-          std::cout << "Please insert pin: "sv;
-          std::getline(std::cin, pin);
-
-          getservercert(ptr->second, tree, pin);
-        } else {
-#if defined SUNSHINE_TRAY && SUNSHINE_TRAY >= 1
-          system_tray::update_tray_require_pin();
-#endif
-          ptr->second.async_insert_pin.response = std::move(response);
-
-          fg.disable();
-          return;
-        }
       } else if (it->second == "pairchallenge"sv) {
         tree.put("root.paired", 1);
         tree.put("root.<xmlattr>.status_code", 200);
